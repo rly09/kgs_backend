@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from .database import engine, Base
 from .routers import (
     auth_router,
@@ -35,6 +36,11 @@ app.include_router(categories_router, prefix="/api")
 app.include_router(products_router, prefix="/api")
 app.include_router(orders_router, prefix="/api")
 app.include_router(settings_router, prefix="/api")
+
+# Mount static files for uploaded images
+import os
+os.makedirs("uploads/products", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.get("/")
 def root():

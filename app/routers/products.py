@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
+import os
+import uuid
 from ..database import get_db
 from ..models import Product, Admin
 from ..schemas import ProductCreate, ProductUpdate, ProductResponse
@@ -87,3 +89,43 @@ def delete_product(
     db.delete(db_product)
     db.commit()
     return {"message": "Product deleted successfully"}
+
+@router.post("/upload-image")
+async def upload_product_image(
+    file: UploadFile = File(...),
+    admin: Admin = Depends(get_current_admin)
+):
+    """Upload product image"""
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPEG, PNG, and WebP images are allowed"
+        )
+    
+    # Create uploads directory if it doesn't exist
+    upload_dir = "uploads/products"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # Generate unique filename
+    file_extension = file.filename.split(".")[-1]
+    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+    file_path = os.path.join(upload_dir, unique_filename)
+    
+    # Save file
+    try:
+        contents = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(contents)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload image: {str(e)}"
+        )
+    
+    # Return the image path (will be served as static file)
+    return {
+        "image_path": f"/uploads/products/{unique_filename}",
+        "message": "Image uploaded successfully"
+    }
