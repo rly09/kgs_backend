@@ -104,7 +104,7 @@ def update_admin_password(
 ):
     """Update admin password"""
     # Verify old password
-    if not verify_password(request.old_password, admin.password):
+    if not verify_password(request.old_password, admin.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current password is incorrect"
@@ -118,7 +118,7 @@ def update_admin_password(
         )
     
     # Update password
-    admin.password = get_password_hash(request.new_password)
+    admin.password_hash = get_password_hash(request.new_password)
     db.commit()
     
     return {"message": "Password updated successfully"}
