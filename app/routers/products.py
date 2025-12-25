@@ -96,9 +96,18 @@ async def upload_product_image(
     admin: Admin = Depends(get_current_admin)
 ):
     """Upload product image"""
-    # Validate file type
+    # Validate file type by content_type and extension
     allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
-    if file.content_type not in allowed_types:
+    allowed_extensions = [".jpg", ".jpeg", ".png", ".webp"]
+    
+    # Get file extension
+    file_extension = os.path.splitext(file.filename)[1].lower() if file.filename else ""
+    
+    # Check if either content_type is valid OR extension is valid
+    is_valid_content_type = file.content_type in allowed_types
+    is_valid_extension = file_extension in allowed_extensions
+    
+    if not (is_valid_content_type or is_valid_extension):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only JPEG, PNG, and WebP images are allowed"
