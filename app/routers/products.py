@@ -96,21 +96,22 @@ async def upload_product_image(
     admin: Admin = Depends(get_current_admin)
 ):
     """Upload product image"""
-    # Validate file type by content_type and extension
-    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+    # Log for debugging
+    print(f"Received file: {file.filename}")
+    print(f"Content type: {file.content_type}")
+    
+    # Validate file type by extension (more reliable across platforms)
     allowed_extensions = [".jpg", ".jpeg", ".png", ".webp"]
     
     # Get file extension
     file_extension = os.path.splitext(file.filename)[1].lower() if file.filename else ""
     
-    # Check if either content_type is valid OR extension is valid
-    is_valid_content_type = file.content_type in allowed_types
-    is_valid_extension = file_extension in allowed_extensions
+    print(f"File extension: {file_extension}")
     
-    if not (is_valid_content_type or is_valid_extension):
+    if file_extension not in allowed_extensions:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only JPEG, PNG, and WebP images are allowed"
+            detail=f"Only JPEG, PNG, and WebP images are allowed. Received: {file.filename}"
         )
     
     # Create uploads directory if it doesn't exist
